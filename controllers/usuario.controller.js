@@ -6,12 +6,21 @@ const { generarJWT } = require('../helpers/jwt');
 
 const getUsuarios = async (req, res) => {
 
-    const usuarios = await Usuario.find({}, 'nombre email role')
+    const desde = Number(req.query.desde) || 0;
+
+    // de esta forma puedo hacer que se ejecuten las promesas de manera simultanea.
+    const [usuarios, totalRegistros ] = await Promise.all([
+        Usuario.find({}, 'nombre email role img')
+               .skip(desde)
+               .limit(5),
+        Usuario.countDocuments()
+    ]);
 
     res.json({
         ok: true,
         usuarios,
-        id: req.id
+        id: req.id,
+        totalRegistros
     })
 };
 
@@ -106,7 +115,7 @@ const borrarUsuario = async (req, res = response) => {
 
     const id = req.params.id
 
-    try{
+    try {
 
         const usuarioDB = await Usuario.findById(id);
 
@@ -124,14 +133,14 @@ const borrarUsuario = async (req, res = response) => {
             msg: 'Usuario eliminado'
         })
 
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
             ok: false,
             msg: 'Error interno del servidor'
         })
     }
 
-    
+
 }
 
 module.exports = {
